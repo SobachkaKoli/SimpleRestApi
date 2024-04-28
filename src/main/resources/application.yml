@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: MyRest
+server:
+  servlet:
+    context-path: /api
+min:
+  registration:
+    age: 18
