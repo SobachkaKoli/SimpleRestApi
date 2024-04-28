@@ -35,8 +35,7 @@ public class UserController {
     public ResponseEntity<User> createUser(@RequestBody UserDTO userDTO) {
         Period age = Period.between(userDTO.getBirthDate(), LocalDate.now());
         if (age.getYears() >= minAge) {
-            userService.createUser(userDTO);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(userService.createUser(userDTO));
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You must be 18 or older");
         }
