@@ -5,7 +5,9 @@ import com.example.myrest.model.dto.UserDTO;
 import com.example.myrest.repo.UserRepository;
 import com.example.myrest.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,14 +20,18 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(UserDTO userDTO) {
-        return userRepository.save(
-                User.builder()
-                        .email(userDTO.getEmail())
-                        .firstName(userDTO.getFirstName())
-                        .lastName(userDTO.getLastName())
-                        .birthDate(userDTO.getBirthDate())
-                        .address(userDTO.getAddress())
-                        .phoneNumber(userDTO.getPhoneNumber()).build());
+        validateUser(userDTO);
+
+        User user = User.builder()
+                .email(userDTO.getEmail())
+                .firstName(userDTO.getFirstName())
+                .lastName(userDTO.getLastName())
+                .birthDate(userDTO.getBirthDate())
+                .address(userDTO.getAddress())
+                .phoneNumber(userDTO.getPhoneNumber())
+                .build();
+
+        return userRepository.save(user);
     }
 
     @Override
@@ -64,5 +70,28 @@ public class UserServiceImpl implements UserService {
     public List<User> searchUsersByBirthDate(LocalDate fromDate, LocalDate toDate) {
 
         return userRepository.findAllByBirthDateBetween(fromDate, toDate);
+    }
+
+    private void validateUser(UserDTO userDTO) throws ResponseStatusException {
+        if (userDTO.getEmail() == null || !isValidEmail(userDTO.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required and must be a valid email address.");
+        }
+
+        if (userDTO.getFirstName() == null || userDTO.getFirstName().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "First name is required.");
+        }
+
+        if (userDTO.getLastName() == null || userDTO.getLastName().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Last name is required.");
+        }
+
+        if (userDTO.getBirthDate() == null || userDTO.getBirthDate().isAfter(LocalDate.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Birth date is required and must be earlier than today.");
+        }
+    }
+
+    private boolean isValidEmail(String email) {
+        String emailRegex = "^[\\w!#$%&'*+/=?^`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[\\w](?:[\\w-]*[\\w])?$";
+        return email != null && email.matches(emailRegex);
     }
 }
